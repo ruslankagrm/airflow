@@ -37,14 +37,14 @@ def get_tasks_result(search_id: str) -> SearchTaskResult:
 
 @celery.task(name="call_first_provider")
 def call_first_provider() -> dict:
-    sleep(2)
+    sleep(30)
     file_path = 'response_a.json'
     return FlightSearchManager(file_path).search_flights()
 
 
 @celery.task(name="call_second_provider")
 def call_second_provider() -> dict:
-    sleep(2)
+    sleep(60)
     file_path = 'response_b.json'
     return FlightSearchManager(file_path).search_flights()
 
