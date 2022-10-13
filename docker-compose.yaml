@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airflow
+    command: pipenv run uvicorn main:airflow --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/airflow_vol
+    ports:
+      - "9000:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: airflow_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airflow_celery_beat
+    command: pipenv run celery -A tasks beat
+    depends_on:
+      - app
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airflow_celery_worker
+    command: pipenv run celery -A tasks.celery worker --loglevel=info
+    depends_on:
+      - app
+      - redis

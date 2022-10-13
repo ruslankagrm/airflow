@@ -1,17 +1,19 @@
 import uuid
 
-from celery.result import AsyncResult
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from providers import create_task
+from FlightSearchManager import FlightSearchManager
+from models import SearchTaskResult
+from tasks import get_tasks_result, create_search_tasks
 
 description = """
 ## Airflow API helps you to get an info about the flight🚀
 
 ### Utility
-You are able to get needed flights' info
+You can get detailed information about flight
 
+You will get JSON info representation, flights are sorted for currency you choose
 """
 airflow = FastAPI(
     title="Airflow",
@@ -20,24 +22,25 @@ airflow = FastAPI(
 )
 
 
-@airflow.get("/results/{search_id}",
+@airflow.get("/results/{search_id}/{currency}",
              description="### This endpoint is to search the flight info",
              status_code=200,
              )
-async def results(search_id: str):
-    search_result = AsyncResult(search_id)
-    result = {
-        "search_id": search_id,
-        "status": search_result.status,
-        "items": search_result.result
-    }
-    return JSONResponse(result)
+async def results(search_id: uuid.UUID, currency: str = "KZT") -> JSONResponse:
+    search_tasks_result = get_tasks_result(search_id=str(search_id))
+    if search_tasks_result.status == "SUCCESS":
+        flights_info, flag = FlightSearchManager().update_and_sort(flights=search_tasks_result.items,
+                                                                   input_currency=currency)
+        if flag:
+            search_tasks_result.items = flights_info
+    return JSONResponse(search_tasks_result.to_json_response())
 
 
 @airflow.post("/search",
               description="### This endpoint will start the search and give you a unique id, which you can use to get a detailed info",
               status_code=201,
               )
-async def search():
-    search_task = create_task.delay()
-    return JSONResponse({"search_id": search_task.id})
+async def search() -> JSONResponse:
+    search_task = create_search_tasks.delay()
+    search_task_result = SearchTaskResult(**{"search_id": search_task.id})
+    return JSONResponse(search_task_result.status_response())
