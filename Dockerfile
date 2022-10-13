@@ -16,7 +16,3 @@ COPY Pipfile.lock Pipfile /airflow/
 RUN pipenv install Pipfile
 
 EXPOSE 9000
-
-#ENTRYPOINT uvicorn airflow.main:airflow--host 0.0.0.0 --port 90 --reload
-
-#CMD ["uvicorn", "main:airflow", "--host", "0.0.0.0", "--port", "90"]
