@@ -10,6 +10,7 @@ RUN apt-get update && \
 
 RUN pip install -U pip
 
+
 RUN pip install pipenv
 
 COPY Pipfile.lock Pipfile /airflow/
