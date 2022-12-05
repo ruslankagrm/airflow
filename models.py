@@ -5,6 +5,8 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+
+
 class Price(BaseModel):
     amount: Optional[float]
     currency: Optional[str]
